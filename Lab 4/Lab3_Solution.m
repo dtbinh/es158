@@ -35,52 +35,35 @@ D = [0; 0];              % no OL feedthrough
     
 OL = ss(A, B, C, D);     % open loop system
 
-%% Create the transfer functions associated with the system
-
-P1 = tf(b(1,:),a); 
-P2 = tf(b(2,:),a); 
-
-%% Use the control system toolbox to design a controller for the position
-controlSystemDesigner(P1)
-
-%% Use the control system toolbox to a design a controller for the angle
-controlSystemDesigner(P2)
-
 %% Stability Analysis
-sys = ss(A, B, C, D);
 
-clf 
-close all
+figure, hold on
+pzmap(OL)
 
-figure(1)
-pzplot(sys); 
+figure, nyquist(OL); 
+% For x output: no net encirclements, but 1 pole in RHP means unstable
+% For th output: no net encirclements, but 1 pole in RHP means unstable
 
-figure(2)
-bode(sys); 
+Cx = [1 0 0 0]; Cth = [0 1 0 0];
 
-figure(3)
-nyquist(sys); 
+[Numx, Denx] = ss2tf(A, B, Cx, 0);
+[Numth, Denth] = ss2tf(A, B, Cth, 0);
 
-%% Create the simulink model
-simulink
+TFx = tf(Numx, Denx);
+TFth = tf(Numth, Denth);
 
-%% Observabilty and reachability 
-Wr = [B A*B A^2*B A^3*B]; 
-det_Wr = det(Wr); 
+figure, subplot(2,1,1), bode(TFx), grid on
+subplot(2,1,2), bode(TFth), grid on
 
-Wo_p = [C(1, :); C(1, :)*A; C(1, :)*A^2; C(1, :)*A^3]; 
-Wo_theta = [C(2, :); C(2, :)*A; C(2, :)*A^2; C(2, :)*A^3]; 
-det_p = det(Wo_p); 
-det_theta = det(Wo_theta); 
+%% Controllability and Observability
 
-% Goes from state space to transfer function
-% ss2tf
+Ctr = [B, A*B, A^2*B, A^3*B];
+rank(Ctr); % full rank
 
-% ONce I have transfer function, then have the plant
+Obsx = [Cx; Cx*A; Cx*A^2; Cx*A^3];
+rank(Obsx); % full rank
 
-% One plant: controlSystemDesigner(P) - help controlSystemDesigner - change
-% C to change the proportional control, Change root locus to change the
-% gain (imaginary axis) - see in real time what the step response is... kp
-% + kis / s ... 
+Obsth = [Cth; Cth*A; Cth*A^2; Cth*A^3];
+rank(Obsth); % NOT FULL RANK
 
 
