@@ -35,16 +35,26 @@ D = [0; 0];              % no OL feedthrough
     
 OL = ss(A, B, C, D);     % open loop system
 
-%% Create the transfer functions associated with the system
+%% Compute the numerator and denominator of the plants
+[b, a] = ss2tf(A,B,C,D)
 
-P1 = tf(b(1,:),a); 
-P2 = tf(b(2,:),a); 
+b(2,:) = b(2,:) .* [1 1 1 0 0]; 
+
+% Adjust the numerator and denominator accordingly
+P1 = tf(b(1,:),a);
+P2 = tf([0 b(2,1:4)],[0 a(1:4)]); % cancel the s from the numerator and denominator
 
 %% Use the control system toolbox to design a controller for the position
-controlSystemDesigner(P1)
+controlSystemDesigner(P2)
+
+%% Design a very simple PID controller
+z1 = [-1 -1]; 
+k1 = -100;
+p1 = 0; 
+C1 = zpk(z1,p1,k1); 
 
 %% Use the control system toolbox to a design a controller for the angle
-controlSystemDesigner(P2)
+controlSystemDesigner(feedback(P1, -C1))
 
 %% Stability Analysis
 sys = ss(A, B, C, D);
