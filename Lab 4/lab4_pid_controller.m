@@ -7,6 +7,7 @@ clear all, close all
 % Define theta as angle from vertical (standing pendulum)
 % theta = 0 means pendulum STANDING inverted
 % x is position of cart along x axis
+DESIGN = 0; 
 
 %% Setup Parameters
 g = 9.81;           % g accel [m/s^2]
@@ -27,8 +28,8 @@ S = [1; 0]; % input weighting matrix (input is force)
 % Compute the full state space model, with all states output
 A = [zeros(2) eye(2); -inv(M)*kappa -inv(M)*beta]; % A,B,C,D in block matrix form
 B = [0; 0; inv(M)*S];    % input matrix
-C = eye(4);  % output matrix (select pos and angle)
-D = [0; 0; 0; 0];              % no OL feedthrough
+C = [1 0 0 0; 0 1 0 0];  % output matrix (select pos and angle)
+D = [0; 0];              % no OL feedthrough
 OL = ss(A, B, C, D);     % open loop system
 
 %% Compute the numerator and denominator of the plants
@@ -41,7 +42,9 @@ P_pos = tf(b(1,:),a);
 P_angle = tf([0 b(2,1:4)],[0 a(1:4)]); % cancel the s from the numerator and denominator
 
 %% Use the control system toolbox to design a controller for the angle
-controlSystemDesigner(P_angle)
+if( DESIGN == 1)
+    controlSystemDesigner(P_angle)
+end
 
 %% Design a very simple PID controller
 z1 = [-1 -1]; 
@@ -51,7 +54,9 @@ C_angle = zpk(z1,p1,k1);
 
 %% Use the control system toolbox to a design a controller for the angle
 x_over_u = P_pos / (1 + P_angle * C_angle); 
-controlSystemDesigner(x_over_u)
+if( DESIGN == 2)
+    controlSystemDesigner(P_angle)
+end
 
 %% Design a simple PID controller to control position
 z1 = -1; 
