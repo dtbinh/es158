@@ -19,78 +19,42 @@ mc = 0.38;          % mass of cart [kg]
 c = 0.90;           % cart damping [N-s/m]
 
 %% State-Space Model
-
 M = [mc+mp mp*r; mp*r J+mp*r^2];
 beta = [c 0; 0 gamma];   % damping matrix
 kappa = [0 0; 0 -mp*g*r]; % stiffness matrix
 S = [1; 0]; % input weighting matrix (input is force)
 
+% Compute the full state space model, with all states output
 A = [zeros(2) eye(2); -inv(M)*kappa -inv(M)*beta]; % A,B,C,D in block matrix form
-
 B = [0; 0; inv(M)*S];    % input matrix
-
-C = [1 0 0 0; 0 1 0 0];  % output matrix (select pos and angle)
-
-D = [0; 0];              % no OL feedthrough
-    
+C = eye(4);  % output matrix (select pos and angle)
+D = [0; 0; 0; 0];              % no OL feedthrough
 OL = ss(A, B, C, D);     % open loop system
 
 %% Compute the numerator and denominator of the plants
-[b, a] = ss2tf(A,B,C,D)
+[b, a] = ss2tf(A,B,C,D); 
 
-b(2,:) = b(2,:) .* [1 1 1 0 0]; 
+b(2,:) = b(2,:) .* [1 1 1 0 0]; % Get rid of numeric errors
 
 % Adjust the numerator and denominator accordingly
-P1 = tf(b(1,:),a);
-P2 = tf([0 b(2,1:4)],[0 a(1:4)]); % cancel the s from the numerator and denominator
+P_pos = tf(b(1,:),a);
+P_angle = tf([0 b(2,1:4)],[0 a(1:4)]); % cancel the s from the numerator and denominator
 
-%% Use the control system toolbox to design a controller for the position
-controlSystemDesigner(P2)
+%% Use the control system toolbox to design a controller for the angle
+controlSystemDesigner(P_angle)
 
 %% Design a very simple PID controller
 z1 = [-1 -1]; 
 k1 = -100;
-p1 = 0; 
-C1 = zpk(z1,p1,k1); 
+p1 = [0]; 
+C_angle = zpk(z1,p1,k1); 
 
 %% Use the control system toolbox to a design a controller for the angle
-controlSystemDesigner(feedback(P1, -C1))
+x_over_u = P_pos / (1 + P_angle * C_angle); 
+controlSystemDesigner(x_over_u)
 
-%% Stability Analysis
-sys = ss(A, B, C, D);
-
-clf 
-close all
-
-figure(1)
-pzplot(sys); 
-
-figure(2)
-bode(sys); 
-
-figure(3)
-nyquist(sys); 
-
-%% Create the simulink model
-simulink
-
-%% Observabilty and reachability 
-Wr = [B A*B A^2*B A^3*B]; 
-det_Wr = det(Wr); 
-
-Wo_p = [C(1, :); C(1, :)*A; C(1, :)*A^2; C(1, :)*A^3]; 
-Wo_theta = [C(2, :); C(2, :)*A; C(2, :)*A^2; C(2, :)*A^3]; 
-det_p = det(Wo_p); 
-det_theta = det(Wo_theta); 
-
-% Goes from state space to transfer function
-% ss2tf
-
-% ONce I have transfer function, then have the plant
-
-% One plant: controlSystemDesigner(P) - help controlSystemDesigner - change
-% C to change the proportional control, Change root locus to change the
-% gain (imaginary axis) - see in real time what the step response is... kp
-% + kis / s ... 
-
-
+%% Design a simple PID controller to control position
+z1 = -1; 
+k1 = -100;
+p1 = []; 
+C_pos = zpk(z1,p1,k1); 
