@@ -47,19 +47,19 @@ if( DESIGN == 1)
 end
 
 %% Design a very simple PID controller
-z1 = [-1 -1]; 
-k1 = -100;
-p1 = [0]; 
+z1 = [-1/0.94 -1/0.55]; 
+k1 = -65.439;
+p1 = 0; 
 C_angle = zpk(z1,p1,k1); 
 
 %% Use the control system toolbox to a design a controller for the angle
 x_over_u = P_pos / (1 + P_angle * C_angle); 
 if( DESIGN == 2)
-    controlSystemDesigner(P_angle)
+    controlSystemDesigner(x_over_u)
 end
 
 %% Design a simple PID controller to control position
 z1 = -1; 
-k1 = -100;
+k1 = -10;
 p1 = []; 
 C_pos = zpk(z1,p1,k1); 
