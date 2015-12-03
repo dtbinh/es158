@@ -1,8 +1,4 @@
-
-clear all, close all
-
 % State vector: [x theta x_dot theta_dot]^T
-
 % Define theta as angle from vertical (standing pendulum)
 % theta = 0 means pendulum STANDING inverted
 % x is position of cart along x axis
@@ -40,9 +36,19 @@ kr = -1/(C*inv(A-B*K)*B);
 L = place(A',C',[-1 -1.1 -1.01 -1.001])'; 
 
 %% Run the simulink file from Matlab
+model = 'state_feedback_with_estimator'; 
+sim(model)   
 
 %% Read in the simulink output
-temp = y_simout.Data;
-y = reshape(temp,60,1);
-t = y_simout.Time; 
-info = stepinfo(y,t); 
+% Grab theata from the workspace
+theta = theta_out.Data; 
+max_theta = max(theta(:));
+
+% Grab x position data from the workspace
+t = x_out.Time; 
+temp = x_out.Data;
+y = reshape(temp,length(t),1);
+info = stepinfo(y,t, 'SettlingTimeThreshold', 0.01); 
+
+% Compute the score
+score = 155 - 10 * info.Overshoot - 2 * info.SettlingTime - 500 * max_theta; 
