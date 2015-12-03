@@ -62,10 +62,11 @@ if( DESIGN == 2)
 end
 
 %% Design a simple PID controller to control position
-z1 = []; 
+z1 = -1; 
 k1 = -10;
 p1 = []; 
 C_pos = zpk(z1,p1,k1); 
+C_pos_kp
 
 %% Compute the score
 computeScore('pid_controller_model')

@@ -54,10 +54,10 @@ info = stepinfo(y,t, 'SettlingTimeThreshold', 0.01);
 score = 155 - 10 * info.Overshoot - 2 * info.SettlingTime - 500 * max_theta; 
 
 %% Run an optimization on the placement of the poles of the system
-p1 = linspace(4.01,6.01, 5); 
-p2 = linspace(4.02,6.02, 5);  
-p3 = linspace(4.03,6.03, 5); 
-p4 = linspace(4.04,6.04, 5);  
+p1 = linspace(1.01,5.01, 5); 
+p2 = linspace(1.02,5.02, 5);  
+p3 = linspace(1.03,5.03, 5); 
+p4 = linspace(1.04,5.04, 5);  
 pc = combvec(p1, p2, p3, p4); 
 pc = -pc; 
 
@@ -69,8 +69,8 @@ for i = 1:length(pc)
     scores(i) = computeScore('state_feedback_with_estimator'); 
 end
 
-% Compute and plot
-best_poles = pc(:, max(scores) == scores)';
+%% Compute and plot
+best_poles = pc(max(scores) == scores);
 
 figure(1)
 plot(scores)
