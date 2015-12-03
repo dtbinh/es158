@@ -48,7 +48,7 @@ end
 
 %% Design a very simple PID controller
 z1 = [-2 -3.5]; 
-k1 = -100;
+k1 = -101;
 p1 = 0; 
 C_angle = zpk(z1,p1,k1); 
 C_angle_kp = k1 * (-z1(1) - z1(2)); 
