@@ -6,6 +6,9 @@ Tbar = 0.160; % Length of the stationary period of hand motion (s)
 epsilon=195; % Friction coefficient (g * cm / s)
 I=306; % Rotational inertia of the yoyo (g * cm^2)
 g=(100)*9.81; % gravity (cm/s^2)
+a_k = [136.9, -366.5, 174.8, -49.06, 1.883]; 
+pi_k = [1, 2, 3, 4, 5]*pi/T; 
+k = 5; 
 
 % Additional parameters
 beta = r*epsilon/(I+m*r^2); 
@@ -27,7 +30,17 @@ f12='gamma'; v12=gamma;
 f13='k'; v13=k;
 PARAMS = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6,f7,v7,f8,v8,f9,v9,f10,v10,f11,v11,f12,v12,f13,v13); 
 
-% Define the parameters of the model
+%% Create the linear model for the yoyo motion
+phi = fPHI(T,2*T,PARAMS); 
+psi = fPSI(T,2*T,PARAMS);
+sys = ss(1,phi,1,0,1);
+
+N = 100; 
+u = ones(1,N) * psi/phi; 
+t = linspace(0,N-1,N); 
+y = lsim(sys,u,t,0);
+
+%% Define the parameters of the model
 h0 = 0; 
 alpha = 1; 
 a_k = [136.9, -366.5, 174.8, -49.06, 1.883]; 
