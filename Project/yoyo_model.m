@@ -9,6 +9,10 @@ g=(100)*9.81; % gravity (cm/s^2)
 a_k = [136.9, -366.5, 174.8, -49.06, 1.883]; 
 pi_k = [1, 2, 3, 4, 5]*pi/T; 
 k = 5; 
+alpha =1;
+
+h0=0;
+
 
 % Additional parameters
 beta = r*epsilon/(I+m*r^2); 
@@ -28,6 +32,9 @@ f10='pi_k'; v10=pi_k;
 f11='beta'; v11=beta; 
 f12='gamma'; v12=gamma; 
 f13='k'; v13=k;
+
+
+
 PARAMS = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6,f7,v7,f8,v8,f9,v9,f10,v10,f11,v11,f12,v12,f13,v13); 
 
 %% Create the linear model for the yoyo motion
@@ -40,33 +47,18 @@ u = ones(1,N) * psi/phi;
 t = linspace(0,N-1,N); 
 y = lsim(sys,u,t,0);
 
-%% Define the parameters of the model
-h0 = 0; 
-alpha = 1; 
-a_k = [136.9, -366.5, 174.8, -49.06, 1.883]; 
-pi_k = [1, 2, 3, 4, 5]*pi/T; 
+A = 1;
+B = phi;
+C = 1;
+D = 0;
 
-% Define the time vector
-dt = 0.01;  
-N = 5; % number of seconds
-t = linspace(0, N, N/dt);  
+const = psi/phi;
+yr = 0;
 
-% Calculate the trajectory of the hand
-nu2dot = zeros(1, length(t)); 
-for i=1:5
-    nu2dot = nu2dot + a_k(i)*sin(pi_k(i)*t); 
-end
-nu1dot = cumtrapz(t,nu2dot); 
-nu = h0 + cumtrapz(t,nu1dot); 
+H = 1;
+K = 1;
 
-% 
-C1 = 0; 
-C2 = 0; 
+sim('yoyo3');
 
 
-foft = zeros(1,length(t)); 
-for i = 1:5
-    foft = foft - a_k(i).*(pi_k(i)*sin(pi_k(i)*t)+beta*cos(pi_k(i)*t))/(pi_k(i)*(pi_k(i)^2+beta^2));
-end
 
-theta = C1 + C2*exp(-beta*t) + (m*g/epsilon)*t + alpha*gamma*foft; 
