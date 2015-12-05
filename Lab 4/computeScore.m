@@ -15,4 +15,4 @@ y = reshape(temp,length(t),1);
 info = stepinfo(y,t, 'SettlingTimeThreshold', 0.01); 
 
 % Compute the score
-score = 155 - 10 * info.Overshoot - 2 * info.SettlingTime - 500 * max_theta; 
+score = 155 - 10 * (100*info.Overshoot) - 2 * info.SettlingTime - 500 * max_theta; 

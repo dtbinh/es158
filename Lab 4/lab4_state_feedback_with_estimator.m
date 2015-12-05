@@ -27,7 +27,7 @@ D = [0; 0];
 OL = ss(A, B, C, D);     % open loop system
 
 %% Place the poles of a proportional/reference controller
-p = [-4.2071 -1.4327 -1.5 -0.5];
+p = [-1.5 -1.4 -0.51 -0.5]; % new: [-4 -6.02 -6.03 -6.04]; 
 K = place(A,B,p);
 
 % Set xe to a constant, solve dynamics equation so that x_dot = 0
@@ -51,13 +51,15 @@ y = reshape(temp,length(t),1);
 info = stepinfo(y,t, 'SettlingTimeThreshold', 0.01); 
 
 % Compute the score
-score = 155 - 10 * info.Overshoot - 2 * info.SettlingTime - 500 * max_theta; 
+score = 155 - 10 * (100*info.Overshoot) - 2 * info.SettlingTime - 500 * max_theta 
+
+error('Stopping execution before optimization')
 
 %% Run an optimization on the placement of the poles of the system
-p1 = linspace(4.01,6.01, 5); 
-p2 = linspace(4.02,6.02, 5);  
-p3 = linspace(4.03,6.03, 5); 
-p4 = linspace(4.04,6.04, 5);  
+p1 = linspace(.501,1.51, 5); 
+p2 = linspace(.502,1.52, 5);  
+p3 = linspace(.503,1.53, 5); 
+p4 = linspace(.504,1.54, 5);  
 pc = combvec(p1, p2, p3, p4); 
 pc = -pc; 
 

@@ -62,10 +62,119 @@ if( DESIGN == 2)
 end
 
 %% Design a simple PID controller to control position
-z1 = []; 
-k1 = -10;
-p1 = []; 
-C_pos = zpk(z1,p1,k1); 
+z2 = []; 
+k2 = -42;
+p2 = []; 
+C_pos = zpk(z1,p1,k2); 
+C_pos_kp = k2; 
 
 %% Compute the score
 computeScore('pid_controller_model')
+
+error('Stop execution before optimization')
+
+%% Optimize the zero placement of the PID controller
+temp1 = -linspace(1.51, 4.01, 20); 
+temp2 = -linspace(1.51, 4.02, 20); 
+z1_ops = combvec(temp1, temp2); % All the combination for options of zeros
+scores = zeros(1, length(z1_ops)); 
+for i = 1:length(z1_ops)
+    disp([num2str(100 * i/length(z1_ops)), ' percent complete']) 
+    z1 = z1_ops(:, i)'; 
+    k1 = -101;
+    p1 = 0; 
+    C_angle = zpk(z1,p1,k1); 
+    C_angle_kp = k1 * (-z1(1) - z1(2)); 
+    C_angle_ki = k1 * (-z1(1)) * (-z1(2)); 
+    C_angle_kd = k1; 
+    scores(i) = computeScore('pid_controller_model'); 
+end
+
+%% Compute best poles and plot
+best_zeros = z1_ops(:, max(scores) == scores)';
+
+figure(1)
+plot(scores)
+title('Optimization of C_{angle} zero placement')
+ylabel('Score')
+xlabel('Trial Number')
+ylim([0 155])
+
+%% Optimize the gain placement of the C_angle controller
+k1_ops = -linspace(50,150,100);
+scores = zeros(1, length(k1_ops)); 
+for i = 1:length(k1_ops)
+    disp([num2str(100 * i/length(k1_ops)), ' percent complete']) 
+    z1 = [-1.9047 -3.8879]; 
+    k1 = k1_ops(i);
+    p1 = 0; 
+    C_angle = zpk(z1,p1,k1); 
+    C_angle_kp = k1 * (-z1(1) - z1(2)); 
+    C_angle_ki = k1 * (-z1(1)) * (-z1(2)); 
+    C_angle_kd = k1; 
+    scores(i) = computeScore('pid_controller_model'); 
+end
+
+%% Compute best gains and plot
+best_gains = k1_ops(:, max(scores) == scores)';
+
+figure(2)
+plot(k1_ops,scores)
+title('Optimization of C_{angle} kp placement')
+ylabel('Score')
+xlabel('k_p value')
+ylim([0 155])
+
+%% Optimize the gain (kd) placement of the C_pos controller
+z1 = [-1.9047 -3.8879]; 
+k1 = -101;
+C_angle_kp = k1 * (-z1(1) - z1(2)); 
+C_angle_ki = k1 * (-z1(1)) * (-z1(2)); 
+C_angle_kd = k1; 
+k2_ops = -linspace(1,100,100);
+scores = zeros(1, length(k2_ops)); 
+for i = 1:length(k2_ops)
+    disp([num2str(100 * i/length(k2_ops)), ' percent complete']) 
+    C_pos_kp = k2_ops(i); 
+    scores(i) = computeScore('pid_controller_model'); 
+end
+
+%% Compute best gains and plot
+best_gains = k2_ops(:, max(scores) == scores)';
+
+figure(2)
+plot(k2_ops,scores)
+title('Optimization of C_{pos} kp placement')
+ylabel('Score')
+xlabel('k_p value')
+ylim([0 155])
+
+%% Consolidate the most optimial values to date and compute score
+z1 = [-3.2732 -2.02]; 
+z1 = [-1.9047 -3.8879]; 
+k1 = -106;
+C_angle_kp = k1 * (-z1(1) - z1(2)); 
+C_angle_ki = k1 * (-z1(1)) * (-z1(2)); 
+C_angle_kd = k1; 
+
+C_pos_kp = -30;
+
+model_name = 'pid_controller_model'; 
+
+% Run the simulink file from Matlab 
+sim(model_name)   
+
+% Read in the simulink output
+% Grab theata from the workspace
+theta = theta_out.Data; 
+max_theta = max(theta(:));
+
+% Grab x position data from the workspace
+t = x_out.Time; 
+temp = x_out.Data;
+y = reshape(temp,length(t),1);
+info = stepinfo(y,t, 'SettlingTimeThreshold', 0.01); 
+
+% Compute the score
+score = 155 - 10 * (100*info.Overshoot) - 2 * info.SettlingTime - 500 * max_theta; 
+
