@@ -1,0 +1,45 @@
+%% Setup the Kinect acquisition variables
+% Acquire data into memory before logging it
+colorVid = videoinput('kinect',1); 
+depthVid = videoinput('kinect',2);
+
+% Set Kinect Properties
+set([colorVid depthVid], 'FramesPerTrigger', 1);
+set([colorVid depthVid], 'TriggerRepeat', Inf);
+triggerconfig([colorVid depthVid], 'manual')
+
+
+%% Start the color and depth device. This begins acquisition, but does not
+% start logging of acquired data.
+start([colorVid depthVid]);
+
+% Trigger the devices to start logging of data.
+trigger([colorVid depthVid]);
+
+%%
+figure;
+disp('Starting data acquisition...')
+t0 = tic; t = 0;
+while(t < N)
+    if( (t - tKnct(k-1)) > Tsk )
+        % Set the time stamp for the sample
+        tKnct(k) = t; 
+        % Get the data
+        trigger([colorVid depthVid]);
+        rgb_frame = getdata(colorVid); depth_frame = getdata(depthVid);
+        [x, y, d] = findPosition(rgb_frame, depth_frame, tracker); 
+        % Store the data for later
+        KnctData(:,k) = [x;y;d]; 
+        % Increment the sample counter
+        k = k+1; 
+        toc(t0)
+    end
+    % Here's where you'll try to recompute the actual position
+    imshow(rgb_frame)
+end
+
+%%
+delete(colorVid)
+delete(depthVid)
+clear colorVid
+clear depthVid

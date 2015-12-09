@@ -52,13 +52,25 @@ B = phi;
 C = 1;
 D = 0;
 
-const = psi/phi;
+eig([-1-phi*H phi*K; -1 1])
+
+Ao = [1 0; -1 1]; 
+Bo = [phi; 0]; 
+Ko = place(Ao,Bo,[0.5 0.51]); 
+
+const = 0; % const = psi/phi;
 yr = 0;
 
-H = 1;
-K = 1;
+Q=eye(2);
+R=1;
+N=[0;0];
+[K,S,e] = lqi(sys,Q,R,N);
+
+H = Ko(1);
+K = -Ko(2);
 
 sim('yoyo3');
 
+%%
 
 
