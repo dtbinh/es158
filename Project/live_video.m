@@ -1,6 +1,9 @@
+clf
+close all
+
 %% Setup the Kinect acquisition variables
 % Number of seconds 
-N = 10; 
+N = 60; 
 
 % Acquire data into memory before logging it
 colorVid = videoinput('kinect',1); 
@@ -11,32 +14,34 @@ set([colorVid depthVid], 'FramesPerTrigger', 1);
 set([colorVid depthVid], 'TriggerRepeat', Inf);
 triggerconfig([colorVid depthVid], 'manual')
 
-
 %% Start the color and depth device. This begins acquisition, but does not
 % start logging of acquired data.
 start([colorVid depthVid]);
 
-% Trigger the devices to start logging of data.
+%% Trigger the devices to start logging of data.
 trigger([colorVid depthVid]);
 
-rgb_frame = getdata(colorVid); depth_frame = getdata(depthVid);
+[rframe, rts, rmetaData] = getdata(colorVid); 
+[dframe, dts, dmetaData] = getdata(depthVid);
 
-figure;
-h = imshow(rgb_frame);
+figure; h1 = imshow(rframe); 
+figure; h2 = imagesc(dmetaData.SegmentationData); 
 
 %%
 disp('Starting data acquisition...')
 t0 = tic; t = 0;
-while(t < N)
+while(ishandle(h1) && ishandle(h2))
     t = toc(t0); 
     trigger([colorVid depthVid]);
-    rgb_frame = getdata(colorVid); 
-    depth_frame = getdata(depthVid);
-    set(h,'Cdata',rgb_frame);
+    [rframe, rts, rmetaData] = getdata(colorVid); 
+    [dframe, dts, dmetaData] = getdata(depthVid);
+    set(h1,'Cdata',rframe);
+    set(h2,'Cdata',dmetaData.SegmentationData)
+    dmetaData.IsSkeletonTracked
     drawnow
 end
 
-%%
+%% Clean up
 delete(colorVid)
 delete(depthVid)
 clear colorVid
