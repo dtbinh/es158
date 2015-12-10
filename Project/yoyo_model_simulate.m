@@ -14,6 +14,35 @@ alpha =1;
 h0=0;
 
 
+
+% l = r*theta = h - Z 
+
+% (I + m*r^2)*theta2dot = +- m*r(h2dot + g) - r*epsilon*thetadot
+
+
+N = 100;
+
+%downA = [0,(I+m*r^2)/(-r*epsilon);0,-r*epsilon/(I+m*r^2)];
+%downB = [m*r*g/(-r*epsilon);m*r*g/(I+m*r^2)];
+%upB = [-m*r/(-r*epsilon);-m*r/(I+m*r^2)];
+%newC = [1,1];
+%newD = [-m*r*g/(-r*epsilon);-m*r*g/(I+m*r^2)];
+
+
+downA = [0,1;0,-r*epsilon/(I+m*r^2)];
+downB = [0;m*r/(I+m*r^2)];
+upB = [0;-m*r/(I+m*r^2)];
+newC = [1,1];
+newD = 0;
+
+
+
+
+
+simsys = ss(downA,upB,newC,0);
+
+%lsim(simsys);
+
 % Additional parameters
 beta = r*epsilon/(I+m*r^2); 
 gamma = m*r/(I+m*r^2); 
@@ -32,10 +61,12 @@ f10='pi_k'; v10=pi_k;
 f11='beta'; v11=beta; 
 f12='gamma'; v12=gamma; 
 f13='k'; v13=k;
+f14='L'; v14=100;
 
 
 
-PARAMS = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6,f7,v7,f8,v8,f9,v9,f10,v10,f11,v11,f12,v12,f13,v13); 
+
+PARAMS = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6,f7,v7,f8,v8,f9,v9,f10,v10,f11,v11,f12,v12,f13,v13,f14,v14); 
 
 %% Create the linear model for the yoyo motion
 phi = fPHI(T,2*T,PARAMS); 
@@ -43,9 +74,11 @@ psi = fPSI(T,2*T,PARAMS);
 sys = ss(1,phi,1,psi,1);
 
 N = 100; 
-u = ones(1,N) * psi/phi; 
+u = ones(1,N); %* psi/phi; 
 t = linspace(0,N-1,N); 
-y = lsim(sys,u,t,0);
+y = lsim(simsys,u,t,[0,0]);
+
+q = fhot(t,PARAMS);
 
 A = 1;
 B = phi;
@@ -58,7 +91,7 @@ yr = 0;
 H = -100;
 K = .001;
 
-sim('yoyo3');
+%sim('yoyo_sim');
 
 [newk,S,e] = lqi(sys,eye(2),eye(1),0);
 
