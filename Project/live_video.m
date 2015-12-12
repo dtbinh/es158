@@ -24,8 +24,17 @@ trigger([colorVid depthVid]);
 [rframe, rts, rmetaData] = getdata(colorVid); 
 [dframe, dts, dmetaData] = getdata(depthVid);
 
-figure; h1 = imshow(rframe); 
-figure; h2 = imagesc(dmetaData.SegmentationData); 
+figure(1); h1 = imshow(rframe); 
+figure(2); h2 = imagesc(dframe); 
+
+
+%% Create a bounding box around the roi for the hand and yoyo
+figure(1)
+title('Please define a rectangle for the yoyo bounding box:')
+[x1,y1] = ginput(4); 
+zbbox = struct('x',int32(min(x1)),'y',int32(min(y1)),'w',int32((max(x1)-min(x1))),'h',int32(max(y1)-min(y1)));
+rectangle('Position', [zbbox.x,zbbox.y,zbbox.w,zbbox.h],...
+  'EdgeColor','r','LineWidth',2 )
 
 %%
 disp('Starting data acquisition...')
@@ -33,7 +42,7 @@ vcolor = VideoWriter('rframes.avi','Uncompressed AVI');
 vdepth = VideoWriter('dframes.avi','Grayscale AVI');
 open(vcolor)
 open(vdepth)
-t = 0; tic; 
+t = 0; t0 = tic; 
 while(ishandle(h1) && ishandle(h2))
     t = toc(t0); 
     % Trigger the data
@@ -42,18 +51,20 @@ while(ishandle(h1) && ishandle(h2))
     [rframe, rts, rmetaData] = getdata(colorVid); 
     [dframe, dts, dmetaData] = getdata(depthVid);
     % Write data to file 
-    writeVideo(vcolor,rframe)
+    writeVideo(vcolor,rframe(zbbox.y:(zbbox.y+zbbox.h),zbbox.x:(zbbox.x+zbbox.w),:))
     writeVideo(vdepth,mat2gray(dframe, [0 2^16-1]))
     % Write to video display
-    set(h1,'Cdata',rframe);
+    set(h1,'Cdata',rframe(zbbox.y:(zbbox.y+zbbox.h),zbbox.x:(zbbox.x+zbbox.w),:));
     set(h2,'Cdata',dframe)
     % draw video display
     drawnow
 end
+
+%% 
 close(vcolor)
 close(vdepth)
 
-%% Clean up
+% Clean up
 delete(colorVid)
 delete(depthVid)
 clear colorVid

@@ -11,7 +11,7 @@ pause(2);
 
 %% Tell the uarm to move to a coordinate in space
 fprintf(SerialPort, '1');
-coord = [0 -13 10]; 
+coord = [-13 -13 11]; 
 fprintf(SerialPort,['%i %i %i'],coord,'sync');
 
 %% Close the comport
