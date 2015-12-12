@@ -54,6 +54,7 @@ D = 0;
 
 eig([-1-phi*H phi*K; -1 1])
 
+%%
 Ao = [1 0; -1 1]; 
 Bo = [phi; 0]; 
 Ko = place(Ao,Bo,[0.5 0.51]); 

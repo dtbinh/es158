@@ -29,17 +29,29 @@ figure; h2 = imagesc(dmetaData.SegmentationData);
 
 %%
 disp('Starting data acquisition...')
-t0 = tic; t = 0;
+vcolor = VideoWriter('rframes.avi','Uncompressed AVI');
+vdepth = VideoWriter('dframes.avi','Grayscale AVI');
+open(vcolor)
+open(vdepth)
+t = 0; tic; 
 while(ishandle(h1) && ishandle(h2))
     t = toc(t0); 
+    % Trigger the data
     trigger([colorVid depthVid]);
+    % Get the frame off the camera
     [rframe, rts, rmetaData] = getdata(colorVid); 
     [dframe, dts, dmetaData] = getdata(depthVid);
+    % Write data to file 
+    writeVideo(vcolor,rframe)
+    writeVideo(vdepth,mat2gray(dframe, [0 2^16-1]))
+    % Write to video display
     set(h1,'Cdata',rframe);
-    set(h2,'Cdata',dmetaData.SegmentationData)
-    dmetaData.IsSkeletonTracked
+    set(h2,'Cdata',dframe)
+    % draw video display
     drawnow
 end
+close(vcolor)
+close(vdepth)
 
 %% Clean up
 delete(colorVid)

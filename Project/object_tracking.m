@@ -41,35 +41,38 @@ rectangle('Position', [hbbox.x,hbbox.y,hbbox.w,hbbox.h],...
 
 %% Find the pixels that are at the depth range of the yoyo and arm
 zminDepth = 1950; % mm
-zmaxDepth = 2250; % mm
+zmaxDepth = 2300; % mm
 zcolorMask = poly2mask(x1, y1, size(rframe,1), size(rframe,2));
 zdepthMask = (dframe > zminDepth & dframe < zmaxDepth) & zcolorMask;
 figure; h2 = imshow(zdepthMask);
 
-hminDepth = 2100; % mm
+hminDepth = 1950; % mm
 hmaxDepth = 2300; % mm
 hcolorMask = poly2mask(x2, y2, size(rframe,1), size(rframe,2));
 hdepthMask = (dframe > hminDepth & dframe < hmaxDepth) & hcolorMask;
-figure; h2 = imshow(hdepthMask);
+figure; h3 = imshow(hdepthMask);
 
 %% Perform a morphological close operation on the image on a GPU.
-se = strel('disk',5);
-
-% Find the z centroid
-zcloseBW = imopen(zdepthMask,se);
-figure; h3 = imshow(zcloseBW);
-zCC = bwconncomp(zcloseBW);
-zS = regionprops(zCC,'Centroid');
-
-% Find the h centroid
-hcloseBW = imopen(hdepthMask,se);
-figure; h4 = imshow(hcloseBW);
-hCC = bwconncomp(hcloseBW);
-hS = regionprops(hCC,'Centroid');
-
-% Try edge detection
-BW1 = edge(rgb2gray(rframe),'sobel');
-BW2 = edge(rgb2gray(rframe),'canny');
+% se = strel('disk',5);
+% se2 = strel('disk',5);
+% 
+% % Find the z centroid
+% zcloseBW = imopen(zdepthMask,se);
+% figure; h3 = imshow(zcloseBW);
+% zCC = bwconncomp(zcloseBW);
+% zS = regionprops(zCC,'Centroid');
+% 
+% % Find the h centroid
+% hcloseBW = imopen(hdepthMask,se);
+% figure; h4 = imshow(hcloseBW);
+% hCC = bwconncomp(hcloseBW);
+% hS = regionprops(hCC,'Centroid');
+% 
+%% Try edge detection
+colorMask = imopen((zcolorMask | hcolorMask), se); 
+depthMask = imopen((zdepthMask | hdepthMask), se);
+BW1 = edge(dframe,'sobel');
+BW2 = edge(dframe,'canny'); 
 figure;
 imshowpair(BW1,BW2,'montage')
 title('Sobel Filter Canny Filter');
@@ -79,14 +82,19 @@ title('Sobel Filter Canny Filter');
 handPos = zeros(1,N);
 yoyoPos = zeros(1,N);
 figure; 
-subplot(1,2,1); lh1 = line(nan,nan); 
-subplot(1,2,2); lh2 = line(nan,nan);
+subplot(1,2,1); lh1 = line(nan,nan); title('Z position')
+subplot(1,2,2); lh2 = line(nan,nan); title('H position')
 
 %% Try a slightly different approach
-obj = setupSystemObjects();
-tracks = initializeTracks(); % Create an empty array of tracks.
-nextId = 1; % ID of the next track
-[centroids, bboxes, mask] = detectObjects(obj,dframe); 
+% obj = setupSystemObjects();
+% tracks = initializeTracks(); % Create an empty array of tracks.
+% nextId = 1; % ID of the next track
+% [centroids, bboxes, mask] = detectObjects(obj,dframe); 
+
+% % Select the colored region to track
+% disp('Setting up the object tracker...')
+% addpath('..\..\es100\Kinect')
+% tracker = initializeTracker(rframe);
 
 %% Start loop
 i = 1; t0 = tic; t = 0; % Initialize loop measures
@@ -108,6 +116,7 @@ while (ishandle(h1) && ishandle(h2))
         yoyoPos(i) = 0; 
     end
     set(lh1, 'XData', 1:i,'YData', yoyoPos(1:i)); 
+    set(h2,'Cdata',zcloseBW);
     
     % Find the hand
     hdepthMask = (dframe > hminDepth & dframe < hmaxDepth) & hcolorMask;
@@ -122,6 +131,7 @@ while (ishandle(h1) && ishandle(h2))
         handPos(i) = 0; 
     end
     set(lh2, 'XData', 1:i,'YData', handPos(1:i));
+    set(h3,'Cdata',zcloseBW);
     
     % Update state variables and draw graphs
     drawnow
