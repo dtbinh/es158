@@ -3,6 +3,7 @@ m = 100; % mass of the yoyo (g)
 r = 0.50; % radius of the yoyo (cm)
 T = 1.90/2; % 2T is the period of the hand motion (s)
 Tbar = 0.160; % Length of the stationary period of hand motion (s)
+%epsilon=195; % Friction coefficient (g * cm / s)
 epsilon=195; % Friction coefficient (g * cm / s)
 I=306; % Rotational inertia of the yoyo (g * cm^2)
 g=(100)*9.81; % gravity (cm/s^2)
@@ -32,14 +33,24 @@ N = 100;
 downA = [0,1;0,-r*epsilon/(I+m*r^2)];
 downB = [0;m*r/(I+m*r^2)];
 upB = [0;-m*r/(I+m*r^2)];
-newC = [1,1];
+newC = [1,0];
 newD = 0;
+
+downK = [0;m*r*g/(I+m*r^2)];
+upK = [0;-m*r*g/(I+m*r^2)];
+
+%downK = [0;0];
+%upK = [0;0];
+
 
 
 
 
 
 simsys = ss(downA,upB,newC,0);
+
+dwnsys = idss(downA,downB,newC,newD,downK);
+upsys = idss(downA,upB,newC,newD,upK);
 
 %lsim(simsys);
 
@@ -61,7 +72,8 @@ f10='pi_k'; v10=pi_k;
 f11='beta'; v11=beta; 
 f12='gamma'; v12=gamma; 
 f13='k'; v13=k;
-f14='L'; v14=100;
+f14='L'; v14=61.5;
+%f14='L'; v14=50;
 
 
 
@@ -91,7 +103,12 @@ yr = 0;
 H = -100;
 K = .001;
 
-%sim('yoyo_sim');
+
+%variable d for accounting for loss to gravity
+d = PARAMS.m*PARAMS.g*PARAMS.r/(PARAMS.I+PARAMS.m*(PARAMS.r^2));
+
+
+sim('yoyo_sim');
 
 [newk,S,e] = lqi(sys,eye(2),eye(1),0);
 
