@@ -39,8 +39,12 @@ PARAMS = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6,f7,v7,f8,v8,f9,v9,f10,v10,f1
 
 %% Create the linear model for the yoyo motion
 phi = fPHI(T,2*T,PARAMS); 
+oldphi =phi;
+phi = 1;
 psi = fPSI(T,2*T,PARAMS);
-sys = ss(1,phi,1,psi,1);
+oldpsi = psi;
+psi = -100;
+sys = ss(1,phi,1,0,1);
 
 N = 100; 
 u = ones(1,N) * psi/phi; 
@@ -52,26 +56,14 @@ B = phi;
 C = 1;
 D = 0;
 
-eig([-1-phi*H phi*K; -1 1])
-
-%%
-Ao = [1 0; -1 1]; 
-Bo = [phi; 0]; 
-Ko = place(Ao,Bo,[0.5 0.51]); 
-
-const = 0; % const = psi/phi;
+const = psi/phi;
 yr = 0;
 
-
-Q=eye(2);
-R=1;
-N=[0;0];
-[K,S,e] = lqi(sys,Q,R,N);
-
-H = Ko(1);
-K = -Ko(2);
+H = 1;
+K = 1;
 
 sim('yoyo3');
 
+[newk,S,e] = lqi(sys,eye(2),eye(1),0);
 
 
